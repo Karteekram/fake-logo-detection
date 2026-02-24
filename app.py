@@ -24,15 +24,6 @@ body {
     animation: fadeIn 2s ease-in-out;
 }
 
-.upload-card {
-    border-radius:20px;
-    padding:40px;
-    background:#1e293b;
-    border:2px dashed #38bdf8;
-    text-align:center;
-    animation: slideUp 1s ease;
-}
-
 .result-card {
     background:#22c55e;
     color:white;
