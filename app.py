@@ -14,21 +14,13 @@ st.markdown("""
 
 .title {
     text-align:center;
-    font-size:36px;
+    font-size:38px;
     font-weight:bold;
     color:#38bdf8;
     margin-bottom:20px;
     animation: fadeIn 2s ease-in-out;
 }
 
-/* Mobile Responsive */
-@media only screen and (max-width: 600px) {
-    .title {
-        font-size:26px;
-    }
-}
-
-/* Center Image */
 .image-container {
     display:flex;
     justify-content:center;
@@ -40,43 +32,30 @@ st.markdown("""
     border-radius:12px;
 }
 
-/* Gradient Result Card */
 .result-card {
-    background: linear-gradient(to right, #22c55e, #4ade80);
+    background:#22c55e;
     color:white;
-    padding:12px;
+    padding:15px;
     border-radius:15px;
     font-size:20px;
     text-align:center;
-    width:300px;
-    margin:auto;
-    margin-top:20px;
-    animation: slideUp 1s ease-in-out;
+    margin-top:10px;
+    animation: fadeIn 1s ease-in-out;
 }
 
-/* Gradient Confidence Card */
 .confidence-card {
-    background: linear-gradient(to right, #3b82f6, #60a5fa);
+    background:#3b82f6;
     color:white;
-    padding:12px;
+    padding:15px;
     border-radius:15px;
     text-align:center;
-    font-size:18px;
-    width:300px;
-    margin:auto;
+    font-size:20px;
     margin-top:10px;
-    animation: slideUp 1.2s ease-in-out;
-}
+    animation: fadeIn 1.5s ease-in-out;
 
-/* Animation */
 @keyframes fadeIn {
     from {opacity:0;}
     to {opacity:1;}
-}
-
-@keyframes slideUp {
-    from {transform: translateY(40px); opacity:0;}
-    to {transform: translateY(0); opacity:1;}
 }
 
 </style>
