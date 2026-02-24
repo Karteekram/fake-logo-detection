@@ -46,7 +46,7 @@ st.markdown("""
     font-size:20px;
     text-align:center;
     margin:auto;
-    width:300px;
+    
     margin-top:10px;
     animation: fadeIn 1s ease-in-out;
 }
@@ -59,7 +59,7 @@ st.markdown("""
     text-align:center;
     font-size:20px;
     margin:auto;
-    width:300px;
+   
     margin-top:10px;
     animation: fadeIn 1.5s ease-in-out;
 }
