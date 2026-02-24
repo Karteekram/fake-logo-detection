@@ -37,6 +37,7 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
+    width:300px;
     margin:auto;
     margin-top:10px;
 }
@@ -49,10 +50,12 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
+    width:300px;
     margin:auto;
     margin-top:10px;
 }
 
+/* CENTER LOADING TEXT */
 .loader-text {
     text-align:center;
     font-size:18px;
@@ -112,26 +115,27 @@ uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
-    # CENTER IMAGE (WORKS IN MOBILE)
+    # CENTER IMAGE
     display_centered_image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
+    # CENTERED LOADING TEXT
     loading_text = st.empty()
 
     loading_text.markdown(
         '<div class="loader-text">Analyzing Logo...</div>',
         unsafe_allow_html=True
-)
+    )
 
-time.sleep(2)
+    time.sleep(2)
 
-with torch.no_grad():
-    outputs = model(pixel_values=image_tensor).logits
-    probs = F.softmax(outputs, dim=1)
-    confidence, pred = torch.max(probs, dim=1)
+    with torch.no_grad():
+        outputs = model(pixel_values=image_tensor).logits
+        probs = F.softmax(outputs, dim=1)
+        confidence, pred = torch.max(probs, dim=1)
 
-loading_text.empty()
+    loading_text.empty()
 
     classes = ["Fake", "Real"]
 
