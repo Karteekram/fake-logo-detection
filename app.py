@@ -26,7 +26,7 @@ st.markdown("""
     color:white;
     padding:20px;
     border-radius:15px;
-    font-size:25px;
+    font-size:18px;
     text-align:center;
     margin-top:20px;
     animation: fadeIn 1s ease-in-out;
@@ -38,7 +38,7 @@ st.markdown("""
     padding:15px;
     border-radius:15px;
     text-align:center;
-    font-size:20px;
+    font-size:18px;
     margin-top:10px;
     animation: fadeIn 1.5s ease-in-out;}
 
