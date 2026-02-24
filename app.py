@@ -6,7 +6,7 @@ from PIL import Image
 import torch.nn.functional as F
 import time
 
-st.set_page_config(page_title="An Enhanced Fake Logo", layout="centered")
+st.set_page_config(page_title="An Enhanced Fake Logo Verification System using Vision Transformer", layout="centered")
 
 # ------------------- CSS -------------------
 st.markdown("""
@@ -65,7 +65,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ------------------- TITLE -------------------
-st.markdown('<div class="title">Fake Logo Detection</div>', unsafe_allow_html=True)
+st.markdown('<div class="title">An Enhanced Fake Logo Verification System using Vision Transformer</div>', unsafe_allow_html=True)
 
 device = torch.device("cpu")
 
