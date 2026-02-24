@@ -41,7 +41,7 @@ st.markdown("""
     border-radius:10px;
     text-align:center;
     font-size:18px;
-    width:300px;
+    width:500px;
     margin:auto;
     margin-top:10px;
     animation: fadeIn 1.5s ease-in-out;
