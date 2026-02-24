@@ -97,7 +97,7 @@ uploaded_file = st.file_uploader("", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
     
-    st.image(image, width=500)
+    st.image(image, width=500, text-align:center)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
