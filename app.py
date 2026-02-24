@@ -28,7 +28,7 @@ st.markdown("""
     border-radius:10px;
     font-size:20px;
     text-align:center;
-    width:300px;
+    width:1000px;
     margin:auto;
     margin-top:20px;
     animation: fadeIn 1s ease-in-out;
@@ -41,7 +41,7 @@ st.markdown("""
     border-radius:10px;
     text-align:center;
     font-size:18px;
-    width:500px;
+    width:1000px;
     margin:auto;
     margin-top:10px;
     animation: fadeIn 1.5s ease-in-out;
