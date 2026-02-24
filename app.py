@@ -6,7 +6,10 @@ from PIL import Image
 import torch.nn.functional as F
 import time
 
-st.set_page_config(page_title="An Enhanced Fake Logo Verification System using Vision Transformer", layout="centered")
+st.set_page_config(
+    page_title="An Enhanced Fake Logo Verification System using Vision Transformer",
+    layout="centered"
+)
 
 # ------------------- CSS -------------------
 st.markdown("""
@@ -24,13 +27,14 @@ st.markdown("""
     margin-bottom:20px;
 }
 
-/* STREAMLIT IMAGE CENTER FIX MOBILE + LAPTOP */
-div[data-testid="stImage"] {
-    text-align: center !important;
-    display: block !important;
+/* ===== MOBILE + LAPTOP IMAGE CENTER FIX ===== */
+[data-testid="stVerticalBlock"] > [data-testid="stImage"] {
+    display: flex !important;
+    justify-content: center !important;
 }
 
-div[data-testid="stImage"] img {
+/* ===== CENTER IMAGE ===== */
+[data-testid="stImage"] img {
     display: block !important;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -39,7 +43,7 @@ div[data-testid="stImage"] img {
     border-radius:12px;
 }
 
-/* MATCH CARDS WIDTH */
+/* ===== RESULT CARD ===== */
 .result-card {
     background:#22c55e;
     color:white;
@@ -47,10 +51,12 @@ div[data-testid="stImage"] img {
     border-radius:15px;
     font-size:20px;
     text-align:center;
+    width:300px;
     margin:auto;
     margin-top:10px;
 }
 
+/* ===== CONFIDENCE CARD ===== */
 .confidence-card {
     background:#3b82f6;
     color:white;
@@ -58,6 +64,7 @@ div[data-testid="stImage"] img {
     border-radius:15px;
     text-align:center;
     font-size:20px;
+    width:300px;
     margin:auto;
     margin-top:10px;
 }
@@ -66,7 +73,10 @@ div[data-testid="stImage"] img {
 """, unsafe_allow_html=True)
 
 # ------------------- TITLE -------------------
-st.markdown('<div class="title">An Enhanced Fake Logo Verification System using Vision Transformer</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="title">An Enhanced Fake Logo Verification System using Vision Transformer</div>',
+    unsafe_allow_html=True
+)
 
 device = torch.device("cpu")
 
@@ -89,6 +99,7 @@ uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
+    # ===== IMAGE (DO NOT USE COLUMNS) =====
     st.image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
@@ -102,5 +113,12 @@ if uploaded_file:
 
     classes = ["Fake", "Real"]
 
-    st.markdown(f'<div class="result-card">Prediction: {classes[pred.item()]}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="confidence-card">Confidence: {round(confidence.item()*100,2)}%</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="result-card">Prediction: {classes[pred.item()]}</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        f'<div class="confidence-card">Confidence: {round(confidence.item()*100,2)}%</div>',
+        unsafe_allow_html=True
+    )
