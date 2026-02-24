@@ -6,57 +6,52 @@ from PIL import Image
 import torch.nn.functional as F
 import time
 
-st.set_page_config(page_title="Fake Logo Detection", layout="wide")
+st.set_page_config(page_title="Fake Logo Detection", layout="centered")
 
 # ------------------- CSS -------------------
 st.markdown("""
 <style>
 
-body {
-    background: linear-gradient(to right, #0f172a, #1e293b);
-}
-
 .title {
     text-align:center;
-    font-size:35px;
+    font-size:38px;
     font-weight:bold;
     color:#38bdf8;
-    margin-top:10px;
-    margin-bottom:10px;
-    animation: fadeIn 1.5s ease-in-out;
-}
-
-.center-image {
-    display: flex;
-    justify-content: center;
-    margin-top:20px;
+    margin-bottom:20px;
+    animation: fadeIn 2s ease-in-out;
 }
 
 .result-card {
     background:#22c55e;
     color:white;
-    padding:12px;
-    border-radius:12px;
+    padding:10px;
+    border-radius:10px;
     font-size:20px;
     text-align:center;
-    margin-top:15px;
+    width:300px;
+    margin:auto;
+    margin-top:20px;
     animation: fadeIn 1s ease-in-out;
 }
 
 .confidence-card {
     background:#3b82f6;
     color:white;
-    padding:10px;
-    border-radius:12px;
+    padding:8px;
+    border-radius:10px;
     text-align:center;
     font-size:18px;
-    margin-top:8px;
-    animation: fadeIn 1.2s ease-in-out;
+    width:300px;
+    margin:auto;
+    margin-top:10px;
+    animation: fadeIn 1.5s ease-in-out;
 }
 
-img {
-    max-width:250px;
-    border-radius:10px;
+.center-img {
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
+    width:250px;
     animation: zoomIn 1s ease;
 }
 
@@ -74,7 +69,7 @@ img {
 """, unsafe_allow_html=True)
 
 # ------------------- HTML -------------------
-st.markdown('<div class="title">🕵️ Fake Logo Detection</div>', unsafe_allow_html=True)
+st.markdown('<div class="title">Fake Logo Detection</div>', unsafe_allow_html=True)
 
 device = torch.device("cpu")
 
@@ -92,14 +87,14 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-uploaded_file = st.file_uploader("", type=["jpg","png","jpeg"])
+uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
     
-    st.markdown('<div class="center-image">', unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     st.image(image, width=250)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
