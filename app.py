@@ -24,6 +24,12 @@ st.markdown("""
     animation: fadeIn 2s ease-in-out;
 }
 
+@media only screen and (max-width: 600px) {
+    .title {
+        font-size:22px;
+    }
+}
+
 .image-container {
     display:flex;
     justify-content:center;
