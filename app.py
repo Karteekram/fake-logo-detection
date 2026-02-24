@@ -13,7 +13,7 @@ st.markdown("""
 <style>
 
 .block-container {
-    padding-top: 0.5rem !important;
+    padding-top: 1.5rem !important;
 }
 .title {
     text-align:center;
