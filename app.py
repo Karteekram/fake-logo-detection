@@ -5,6 +5,8 @@ from torchvision import transforms
 from PIL import Image
 import torch.nn.functional as F
 import time
+import base64
+import io
 
 st.set_page_config(
     page_title="An Enhanced Fake Logo Verification System using Vision Transformer",
@@ -27,23 +29,7 @@ st.markdown("""
     margin-bottom:20px;
 }
 
-/* ===== MOBILE + LAPTOP IMAGE CENTER FIX ===== */
-[data-testid="stVerticalBlock"] > [data-testid="stImage"] {
-    display: flex !important;
-    justify-content: center !important;
-}
-
-/* ===== CENTER IMAGE ===== */
-[data-testid="stImage"] img {
-    display: block !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    width: 300px !important;
-    max-width: 90% !important;
-    border-radius:12px;
-}
-
-/* ===== RESULT CARD ===== */
+/* RESULT CARD */
 .result-card {
     background:#22c55e;
     color:white;
@@ -56,7 +42,7 @@ st.markdown("""
     margin-top:10px;
 }
 
-/* ===== CONFIDENCE CARD ===== */
+/* CONFIDENCE CARD */
 .confidence-card {
     background:#3b82f6;
     color:white;
@@ -94,13 +80,27 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
+# ------------------- IMAGE CENTER FUNCTION -------------------
+def display_centered_image(image):
+    buf = io.BytesIO()
+    image.save(buf, format="PNG")
+    img_str = base64.b64encode(buf.getvalue()).decode()
+    
+    st.markdown(f"""
+        <div style="text-align:center;">
+            <img src="data:image/png;base64,{img_str}" 
+                 style="width:300px; max-width:90%; border-radius:12px;">
+        </div>
+    """, unsafe_allow_html=True)
+
+# ------------------- FILE UPLOAD -------------------
 uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
-    # ===== IMAGE (DO NOT USE COLUMNS) =====
-    st.image(image)
+    # CENTER IMAGE (WORKS IN MOBILE)
+    display_centered_image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
