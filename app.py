@@ -53,6 +53,21 @@ st.markdown("""
     margin-top:10px;
 }
 
+.loader-text {
+    text-align:center;
+    font-size:18px;
+    font-weight:bold;
+    color:#38bdf8;
+    margin-top:10px;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% {opacity:0.2;}
+    50% {opacity:1;}
+    100% {opacity:0.2;}
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -102,12 +117,21 @@ if uploaded_file:
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
-    with st.spinner("Analyzing Logo..."):
-        time.sleep(2)
-        with torch.no_grad():
-            outputs = model(pixel_values=image_tensor).logits
-            probs = F.softmax(outputs, dim=1)
-            confidence, pred = torch.max(probs, dim=1)
+    loading_text = st.empty()
+
+    loading_text.markdown(
+        '<div class="loader-text">Analyzing Logo...</div>',
+        unsafe_allow_html=True
+)
+
+time.sleep(2)
+
+with torch.no_grad():
+    outputs = model(pixel_values=image_tensor).logits
+    probs = F.softmax(outputs, dim=1)
+    confidence, pred = torch.max(probs, dim=1)
+
+loading_text.empty()
 
     classes = ["Fake", "Real"]
 
