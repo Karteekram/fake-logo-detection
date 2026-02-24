@@ -111,6 +111,6 @@ if uploaded_file:
     classes = ["Fake", "Real"]
 
     st.markdown(f'<div class="result-card">Prediction: {classes[pred.item()]}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="confidence-card">Confidence: {round(confidence.item()*100,2)}%</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="confidence-card">Confidence: {round(confidence.item()*50,2)}%</div>', unsafe_allow_html=True)
 
     st.progress(int(confidence.item()*100))
