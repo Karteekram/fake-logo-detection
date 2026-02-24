@@ -60,7 +60,7 @@ st.markdown("""
     text-align:center;
     font-size:18px;
     font-weight:bold;
-    color:#38bdf8;
+
     margin-top:10px;
     animation: blink 1s infinite;
 }
