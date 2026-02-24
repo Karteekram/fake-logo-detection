@@ -36,7 +36,7 @@ st.markdown("""
     background:#22c55e;
     color:white;
     padding:10px;
-    border-radius:12px;
+    border-radius:10px;
     font-size:20px;
     text-align:center;
     width:300px;
@@ -48,8 +48,8 @@ st.markdown("""
 .confidence-card {
     background:#3b82f6;
     color:white;
-    padding:10px;
-    border-radius:12px;
+    padding:8px;
+    border-radius:10px;
     text-align:center;
     font-size:18px;
     width:300px;
