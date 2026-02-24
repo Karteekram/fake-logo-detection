@@ -21,24 +21,22 @@ st.markdown("""
     animation: fadeIn 2s ease-in-out;
 }
 
-.center-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.image-container {
+    display:flex;
+    justify-content:center;
+    align-items:center;
 }
 
-.center-container img {
-    max-width: 250px;
-    border-radius: 10px;
-    display:block;
-    margin:auto;
+.image-container img {
+    width:300px !important;
+    border-radius:12px;
 }
 
 .result-card {
     background:#22c55e;
     color:white;
     padding:10px;
-    border-radius:10px;
+    border-radius:12px;
     font-size:20px;
     text-align:center;
     width:300px;
@@ -50,8 +48,8 @@ st.markdown("""
 .confidence-card {
     background:#3b82f6;
     color:white;
-    padding:8px;
-    border-radius:10px;
+    padding:10px;
+    border-radius:12px;
     text-align:center;
     font-size:18px;
     width:300px;
@@ -68,7 +66,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------- HTML -------------------
+# ------------------- TITLE -------------------
 st.markdown('<div class="title">Fake Logo Detection</div>', unsafe_allow_html=True)
 
 device = torch.device("cpu")
@@ -91,10 +89,10 @@ uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
-    
-    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-    st.image(image, width=250)
-    st.markdown("</div>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        st.image(image, width=300)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
@@ -109,4 +107,3 @@ if uploaded_file:
 
     st.markdown(f'<div class="result-card">Prediction: {classes[pred.item()]}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="confidence-card">Confidence: {round(confidence.item()*100,2)}%</div>', unsafe_allow_html=True)
-
