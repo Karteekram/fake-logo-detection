@@ -60,7 +60,6 @@ st.markdown("""
     text-align:center;
     font-size:18px;
     font-weight:bold;
-
     margin-top:10px;
     animation: blink 1s infinite;
 }
@@ -128,7 +127,7 @@ if uploaded_file:
         unsafe_allow_html=True
     )
 
-    time.sleep(2)
+    time.sleep(3)
 
     with torch.no_grad():
         outputs = model(pixel_values=image_tensor).logits
