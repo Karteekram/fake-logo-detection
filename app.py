@@ -35,11 +35,11 @@ st.markdown("""
 .result-card {
     background:#22c55e;
     color:white;
-    padding:20px;
+    padding:15px;
     border-radius:15px;
-    font-size:25px;
+    font-size:20px;
     text-align:center;
-    margin-top:20px;
+    margin-top:10px;
     animation: fadeIn 1s ease-in-out;
 }
 
