@@ -12,6 +12,9 @@ st.set_page_config(page_title="Fake Logo Detection", layout="centered")
 st.markdown("""
 <style>
 
+.block-container {
+    padding-top: 1rem !important;
+}
 .title {
     text-align:center;
     font-size:38px;
