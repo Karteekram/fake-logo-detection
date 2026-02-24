@@ -95,7 +95,7 @@ if uploaded_file:
 
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
-    st.image(image, width=300)
+        st.image(image, width=300)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
