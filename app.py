@@ -24,12 +24,10 @@ st.markdown("""
 .result-card {
     background:#22c55e;
     color:white;
-    padding:10px;
-    border-radius:10px;
-    font-size:20px;
+    padding:20px;
+    border-radius:15px;
+    font-size:25px;
     text-align:center;
-    width:1000px;
-    margin:auto;
     margin-top:20px;
     animation: fadeIn 1s ease-in-out;
 }
@@ -37,15 +35,12 @@ st.markdown("""
 .confidence-card {
     background:#3b82f6;
     color:white;
-    padding:8px;
-    border-radius:10px;
+    padding:15px;
+    border-radius:15px;
     text-align:center;
-    font-size:18px;
-    width:1000px;
-    margin:auto;
+    font-size:20px;
     margin-top:10px;
-    animation: fadeIn 1.5s ease-in-out;
-}
+    animation: fadeIn 1.5s ease-in-out;}
 
 .center-img {
     display:block;
