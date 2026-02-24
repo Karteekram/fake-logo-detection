@@ -5,55 +5,7 @@ from torchvision import transforms
 from PIL import Image
 import torch.nn.functional as F
 
-st.set_page_config(page_title="Fake Logo Detection", layout="wide")
-
-# ------------------ CUSTOM CSS ------------------
-st.markdown("""
-<style>
-
-body {
-    background-color: #0f172a;
-}
-
-.main-title {
-    text-align: center;
-    color: white;
-    font-size: 50px;
-    font-weight: bold;
-    margin-top: 20px;
-}
-
-.upload-box {
-    border: 2px dashed #38bdf8;
-    padding: 40px;
-    border-radius: 20px;
-    text-align: center;
-    background-color: #1e293b;
-}
-
-.result-box {
-    padding: 20px;
-    border-radius: 15px;
-    background-color: #22c55e;
-    color: white;
-    font-size: 25px;
-    text-align: center;
-}
-
-.confidence-box {
-    padding: 15px;
-    border-radius: 15px;
-    background-color: #3b82f6;
-    color: white;
-    text-align: center;
-    font-size: 20px;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# ------------------ HTML TITLE ------------------
-st.markdown('<p class="main-title">🕵️ Fake Logo Detection System</p>', unsafe_allow_html=True)
+st.title("Fake Logo Detection System")
 
 device = torch.device("cpu")
 
@@ -71,13 +23,11 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-st.markdown('<div class="upload-box">Upload Logo Image Below</div>', unsafe_allow_html=True)
-
-uploaded_file = st.file_uploader("", type=["jpg","png","jpeg"])
+uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, use_column_width=True)
+    st.image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
@@ -86,7 +36,7 @@ if uploaded_file:
         probs = F.softmax(outputs, dim=1)
         confidence, pred = torch.max(probs, dim=1)
 
-    classes = ["Fake", "Real"]
+    classes = ["fake", "real"]
 
-    st.markdown(f'<div class="result-box">Prediction: {classes[pred.item()]}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="confidence-box">Confidence: {round(confidence.item()*100,2)}%</div>', unsafe_allow_html=True)
+    st.success(f"Prediction: {classes[pred.item()]}")
+    st.info(f"Confidence: {round(confidence.item()*100,2)}%")
