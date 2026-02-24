@@ -13,33 +13,33 @@ st.markdown("""
 <style>
 
 .block-container {
-    padding-top: 2.2rem !important;
+    padding-top: 2rem !important;
 }
+
 .title {
     text-align:center;
     font-size:28px;
     font-weight:bold;
     color:#38bdf8;
     margin-bottom:20px;
-    animation: fadeIn 2s ease-in-out;
 }
 
-@media only screen and (max-width: 600px) {
-    .title {
-        font-size:22px;
-    }
-}
-.image-container {
-    display:flex;
-    justify-content:center;
-    align-items:center;
+/* STREAMLIT IMAGE CENTER FIX MOBILE + LAPTOP */
+div[data-testid="stImage"] {
+    text-align: center !important;
+    display: block !important;
 }
 
-.image-container img {
-    width:300px !important;
+div[data-testid="stImage"] img {
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 300px !important;
+    max-width: 90% !important;
     border-radius:12px;
 }
 
+/* MATCH CARDS WIDTH */
 .result-card {
     background:#22c55e;
     color:white;
@@ -47,8 +47,8 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
+    margin:auto;
     margin-top:10px;
-    animation: fadeIn 1s ease-in-out;
 }
 
 .confidence-card {
@@ -58,12 +58,8 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
+    margin:auto;
     margin-top:10px;
-    animation: fadeIn 1.5s ease-in-out;
-
-@keyframes fadeIn {
-    from {opacity:0;}
-    to {opacity:1;}
 }
 
 </style>
@@ -93,9 +89,8 @@ uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
-        st.image(image, width=300)
+    
+        st.image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
