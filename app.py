@@ -30,17 +30,7 @@ st.markdown("""
     }
 }
 
-.mobile-center {
-    display: flex;
-    justify-content: center;
-}
 
-.mobile-center img {
-    width: 300px !important;
-    max-width: 90% !important;
-    margin: auto;
-    display: block;
-}
 
 .image-container {
     display:flex;
@@ -106,9 +96,9 @@ uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
-    st.markdown('<div class="mobile-center">', unsafe_allow_html=True)
-    st.image(image, width=300)
-    st.markdown('</div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        st.image(image, width=300)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
