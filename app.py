@@ -18,49 +18,51 @@ body {
 
 .title {
     text-align:center;
-    font-size:50px;
+    font-size:35px;
     font-weight:bold;
     color:#38bdf8;
-    animation: fadeIn 2s ease-in-out;
+    margin-top:10px;
+    margin-bottom:10px;
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+.center-image {
+    display: flex;
+    justify-content: center;
+    margin-top:20px;
 }
 
 .result-card {
     background:#22c55e;
     color:white;
-    padding:20px;
-    border-radius:15px;
-    font-size:25px;
+    padding:12px;
+    border-radius:12px;
+    font-size:20px;
     text-align:center;
-    margin-top:20px;
+    margin-top:15px;
     animation: fadeIn 1s ease-in-out;
 }
 
 .confidence-card {
     background:#3b82f6;
     color:white;
-    padding:15px;
-    border-radius:15px;
+    padding:10px;
+    border-radius:12px;
     text-align:center;
-    font-size:20px;
-    margin-top:10px;
-    animation: fadeIn 1.5s ease-in-out;
+    font-size:18px;
+    margin-top:8px;
+    animation: fadeIn 1.2s ease-in-out;
 }
 
 img {
-    max-width:300px;
+    max-width:250px;
     border-radius:10px;
-    margin-top:20px;
     animation: zoomIn 1s ease;
 }
 
 @keyframes fadeIn {
     from {opacity:0;}
     to {opacity:1;}
-}
-
-@keyframes slideUp {
-    from {transform: translateY(50px); opacity:0;}
-    to {transform: translateY(0); opacity:1;}
 }
 
 @keyframes zoomIn {
@@ -72,7 +74,7 @@ img {
 """, unsafe_allow_html=True)
 
 # ------------------- HTML -------------------
-st.markdown('<div class="title"> Fake Logo Detection</div>', unsafe_allow_html=True)
+st.markdown('<div class="title">🕵️ Fake Logo Detection</div>', unsafe_allow_html=True)
 
 device = torch.device("cpu")
 
@@ -90,14 +92,14 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-st.markdown('<div class="upload-card">Upload a Logo Image</div>', unsafe_allow_html=True)
-
 uploaded_file = st.file_uploader("", type=["jpg","png","jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
     
-    st.image(image, width=500)
+    st.markdown('<div class="center-image">', unsafe_allow_html=True)
+    st.image(image, width=250)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
@@ -111,6 +113,6 @@ if uploaded_file:
     classes = ["Fake", "Real"]
 
     st.markdown(f'<div class="result-card">Prediction: {classes[pred.item()]}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="confidence-card">Confidence: {round(confidence.item()*50,2)}%</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="confidence-card">Confidence: {round(confidence.item()*100,2)}%</div>', unsafe_allow_html=True)
 
     st.progress(int(confidence.item()*100))
