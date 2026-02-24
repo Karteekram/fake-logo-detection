@@ -72,7 +72,7 @@ img {
 """, unsafe_allow_html=True)
 
 # ------------------- HTML -------------------
-st.markdown('<div class="title">🕵️ Fake Logo Detection</div>', unsafe_allow_html=True)
+st.markdown('<div class="title"> Fake Logo Detection</div>', unsafe_allow_html=True)
 
 device = torch.device("cpu")
 
@@ -97,7 +97,7 @@ uploaded_file = st.file_uploader("", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
     
-    st.image(image, width=300)
+    st.image(image, width=500)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
