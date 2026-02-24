@@ -13,8 +13,9 @@ st.markdown("""
 <style>
 
 .block-container {
-    padding-top: 2.2rem !important;
+    padding-top: 2rem !important;
 }
+
 .title {
     text-align:center;
     font-size:28px;
@@ -24,29 +25,17 @@ st.markdown("""
     animation: fadeIn 2s ease-in-out;
 }
 
-.mobile-center {
+/* MOBILE + LAPTOP IMAGE CENTER FIX */
+[data-testid="stImage"] {
     display: flex;
     justify-content: center;
 }
 
-.mobile-center img {
+[data-testid="stImage"] img {
     width: 300px !important;
     max-width: 90% !important;
-    margin: auto;
-    display: block;
-}
-
-
-
-.image-container {
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.image-container img {
-    width:300px !important;
     border-radius:12px;
+    margin:auto !important;
 }
 
 .result-card {
@@ -56,6 +45,8 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
+    margin:auto;
+    width:300px;
     margin-top:10px;
     animation: fadeIn 1s ease-in-out;
 }
@@ -67,8 +58,11 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
+    margin:auto;
+    width:300px;
     margin-top:10px;
     animation: fadeIn 1.5s ease-in-out;
+}
 
 @keyframes fadeIn {
     from {opacity:0;}
@@ -102,9 +96,8 @@ uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
-    st.markdown('<div class="mobile-center">', unsafe_allow_html=True)
-    st.image(image, width=300)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # DISPLAY IMAGE NORMALLY (NO HTML WRAPPER)
+    st.image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
