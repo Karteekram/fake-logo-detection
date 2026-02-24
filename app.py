@@ -37,7 +37,6 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
-    width:300px;
     margin:auto;
     margin-top:10px;
 }
@@ -50,7 +49,6 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
-    width:300px;
     margin:auto;
     margin-top:10px;
 }
