@@ -21,13 +21,28 @@ st.markdown("""
     animation: fadeIn 2s ease-in-out;
 }
 
+.center-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.center-container img {
+    max-width: 250px;
+    border-radius: 10px;
+    display:block;
+    margin:auto;
+}
+
 .result-card {
     background:#22c55e;
     color:white;
-    padding:20px;
-    border-radius:15px;
-    font-size:18px;
+    padding:10px;
+    border-radius:10px;
+    font-size:20px;
     text-align:center;
+    width:300px;
+    margin:auto;
     margin-top:20px;
     animation: fadeIn 1s ease-in-out;
 }
@@ -35,29 +50,19 @@ st.markdown("""
 .confidence-card {
     background:#3b82f6;
     color:white;
-    padding:15px;
-    border-radius:15px;
+    padding:8px;
+    border-radius:10px;
     text-align:center;
     font-size:18px;
+    width:300px;
+    margin:auto;
     margin-top:10px;
-    animation: fadeIn 1.5s ease-in-out;}
-
-.center-img {
-    display:block;
-    margin-left:auto;
-    margin-right:auto;
-    width:250px;
-    animation: zoomIn 1s ease;
+    animation: fadeIn 1.5s ease-in-out;
 }
 
 @keyframes fadeIn {
     from {opacity:0;}
     to {opacity:1;}
-}
-
-@keyframes zoomIn {
-    from {transform: scale(0.8);}
-    to {transform: scale(1);}
 }
 
 </style>
