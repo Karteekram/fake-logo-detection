@@ -7,8 +7,6 @@ import torch.nn.functional as F
 import time
 import base64
 import io
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 
 st.set_page_config(
     page_title="An Enhanced Fake Logo Verification System using Vision Transformer",
@@ -18,9 +16,11 @@ st.set_page_config(
 # ------------------- CSS -------------------
 st.markdown("""
 <style>
+
 .block-container {
     padding-top: 2rem !important;
 }
+
 .title {
     text-align:center;
     font-size:28px;
@@ -28,6 +28,7 @@ st.markdown("""
     color:#38bdf8;
     margin-bottom:20px;
 }
+
 .result-card {
     background:#22c55e;
     color:white;
@@ -38,6 +39,7 @@ st.markdown("""
     margin:auto;
     margin-top:10px;
 }
+
 .confidence-card {
     background:#3b82f6;
     color:white;
@@ -48,6 +50,7 @@ st.markdown("""
     margin:auto;
     margin-top:10px;
 }
+
 .loader-text {
     text-align:center;
     font-size:18px;
@@ -55,14 +58,17 @@ st.markdown("""
     margin-top:10px;
     animation: blink 1s infinite;
 }
+
 @keyframes blink {
     0% {opacity:0.2;}
     50% {opacity:1;}
     100% {opacity:0.2;}
 }
+
 </style>
 """, unsafe_allow_html=True)
 
+# ------------------- TITLE -------------------
 st.markdown(
     '<div class="title">An Enhanced Fake Logo Verification System using Vision Transformer</div>',
     unsafe_allow_html=True
@@ -70,6 +76,7 @@ st.markdown(
 
 device = torch.device("cpu")
 
+# ------------------- LOAD MODEL -------------------
 @st.cache_resource
 def load_model():
     model = ViTForImageClassification.from_pretrained("fake_logo_model")
@@ -79,13 +86,36 @@ def load_model():
 
 model = load_model()
 
-transform = transforms.Compose([
+# ------------------- TRANSFORM -------------------
+base_transform = transforms.Compose([
     transforms.Resize((224,224)),
     transforms.ToTensor(),
-    transforms.Normalize([0.5]*3,[0.5]*3)
+    transforms.Normalize([0.5,0.5,0.5],[0.5,0.5,0.5])
 ])
 
-# ------------------- IMAGE CENTER -------------------
+# Augmentations for TTA
+tta_transforms = [
+    transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.RandomRotation(10),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5]*3,[0.5]*3)
+    ]),
+    transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.ColorJitter(brightness=0.2),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5]*3,[0.5]*3)
+    ]),
+    transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.RandomHorizontalFlip(p=1),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5]*3,[0.5]*3)
+    ]),
+]
+
+# ------------------- IMAGE CENTER FUNCTION -------------------
 def display_centered_image(image):
     buf = io.BytesIO()
     image.save(buf, format="PNG")
@@ -98,6 +128,7 @@ def display_centered_image(image):
         </div>
     """, unsafe_allow_html=True)
 
+# ------------------- FILE UPLOAD -------------------
 uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 
 if uploaded_file:
@@ -105,8 +136,6 @@ if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
     display_centered_image(image)
-
-    image_tensor = transform(image).unsqueeze(0).to(device)
 
     loading_text = st.empty()
 
@@ -117,33 +146,37 @@ if uploaded_file:
 
     time.sleep(2)
 
+    all_probs = []
+
     with torch.no_grad():
 
-        outputs = model(pixel_values=image_tensor)
+        # Base prediction
+        tensor = base_transform(image).unsqueeze(0).to(device)
+        outputs = model(pixel_values=tensor).logits
+        probs = F.softmax(outputs, dim=1)
+        all_probs.append(probs)
 
-        logits = outputs.logits
-        probs = F.softmax(logits, dim=1)
+        # TTA predictions
+        for aug in tta_transforms:
+            tensor = aug(image).unsqueeze(0).to(device)
+            outputs = model(pixel_values=tensor).logits
+            probs = F.softmax(outputs, dim=1)
+            all_probs.append(probs)
 
-        fake_prob = probs[0][0].item()
-        real_prob = probs[0][1].item()
+    # Average probabilities
+    avg_probs = torch.mean(torch.stack(all_probs), dim=0)
 
-        # -------- EMBEDDING SIMILARITY --------
-        features = outputs.hidden_states[-1][:,0,:].cpu().numpy()
+    fake_prob = avg_probs[0][0].item()
+    real_prob = avg_probs[0][1].item()
 
-        # dummy real reference vector (can be replaced with real dataset embeddings)
-        reference = np.random.rand(1,768)
-
-        similarity = cosine_similarity(features, reference)[0][0]
-
-    loading_text.empty()
-
-    # Combined decision
-    if fake_prob > real_prob or similarity < 0.3:
+    if fake_prob > real_prob:
         prediction = "Fake"
-        confidence = max(fake_prob, 1-similarity)
+        confidence = fake_prob
     else:
         prediction = "Real"
         confidence = real_prob
+
+    loading_text.empty()
 
     if confidence < 0.60:
         prediction = "Uncertain"
