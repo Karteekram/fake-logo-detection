@@ -29,7 +29,6 @@ st.markdown("""
     margin-bottom:20px;
 }
 
-/* RESULT CARD */
 .result-card {
     background:#22c55e;
     color:white;
@@ -37,12 +36,10 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
-
     margin:auto;
     margin-top:10px;
 }
 
-/* CONFIDENCE CARD */
 .confidence-card {
     background:#3b82f6;
     color:white;
@@ -50,12 +47,10 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
-
     margin:auto;
     margin-top:10px;
 }
 
-/* CENTER LOADING TEXT */
 .loader-text {
     text-align:center;
     font-size:18px;
@@ -81,6 +76,7 @@ st.markdown(
 
 device = torch.device("cpu")
 
+# ------------------- LOAD MODEL -------------------
 @st.cache_resource
 def load_model():
     model = ViTForImageClassification.from_pretrained("fake_logo_model")
@@ -90,12 +86,13 @@ def load_model():
 
 model = load_model()
 
+# ------------------- IMAGE TRANSFORM -------------------
 transform = transforms.Compose([
     transforms.Resize((224,224)),
     transforms.ToTensor(),
     transforms.Normalize(
-        mean=[0.5, 0.5, 0.5],
-        std=[0.5, 0.5, 0.5]
+        mean=[0.5,0.5,0.5],
+        std=[0.5,0.5,0.5]
     )
 ])
 
@@ -135,19 +132,30 @@ if uploaded_file:
 
     with torch.no_grad():
         outputs = model(pixel_values=image_tensor).logits
-        probs = F.softmax(outputs, dim=1)
-        confidence, pred = torch.max(probs, dim=1)
+        probs = torch.softmax(outputs, dim=1)
+
+        fake_prob = probs[0][0].item()
+        real_prob = probs[0][1].item()
+
+        if fake_prob > real_prob:
+            prediction = "Fake"
+            confidence = fake_prob
+        else:
+            prediction = "Real"
+            confidence = real_prob
 
     loading_text.empty()
 
-    classes = ["Fake", "Real"]
+    # Confidence threshold to avoid wrong predictions
+    if confidence < 0.60:
+        prediction = "Uncertain"
 
     st.markdown(
-        f'<div class="result-card">Prediction: {classes[pred.item()]}</div>',
+        f'<div class="result-card">Prediction: {prediction}</div>',
         unsafe_allow_html=True
     )
 
     st.markdown(
-        f'<div class="confidence-card">Confidence: {round(confidence.item()*100,2)}%</div>',
+        f'<div class="confidence-card">Confidence: {round(confidence*100,2)}%</div>',
         unsafe_allow_html=True
     )
