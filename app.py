@@ -92,7 +92,7 @@ model = load_model()
 
 transform = transforms.Compose([
     transforms.Resize((224,224)),
-    transforms.ToTensor()
+    transforms.ToTensor(),
     transforms.Normalize(
         mean=[0.5, 0.5, 0.5],
         std=[0.5, 0.5, 0.5]
@@ -131,7 +131,7 @@ if uploaded_file:
         unsafe_allow_html=True
     )
 
-    time.sleep(3)
+    time.sleep(2)
 
     with torch.no_grad():
         outputs = model(pixel_values=image_tensor).logits
