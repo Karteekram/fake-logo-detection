@@ -29,6 +29,7 @@ st.markdown("""
     margin-bottom:20px;
 }
 
+/* RESULT CARD */
 .result-card {
     background:#22c55e;
     color:white;
@@ -40,6 +41,7 @@ st.markdown("""
     margin-top:10px;
 }
 
+/* CONFIDENCE CARD */
 .confidence-card {
     background:#3b82f6;
     color:white;
@@ -51,6 +53,7 @@ st.markdown("""
     margin-top:10px;
 }
 
+/* LOADING TEXT */
 .loader-text {
     text-align:center;
     font-size:18px;
@@ -63,6 +66,26 @@ st.markdown("""
     0% {opacity:0.2;}
     50% {opacity:1;}
     100% {opacity:0.2;}
+}
+
+/* EXPLANATION BOX */
+.explain-box {
+    background: #111827;
+    color: white;
+    padding: 15px;
+    border-radius: 12px;
+    width: 300px;
+    margin: auto;
+    margin-top: 15px;
+    font-size: 15px;
+    line-height: 1.6;
+    border-left: 5px solid #38bdf8;
+}
+
+.explain-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #38bdf8;
 }
 
 </style>
@@ -87,33 +110,11 @@ def load_model():
 model = load_model()
 
 # ------------------- TRANSFORM -------------------
-base_transform = transforms.Compose([
+transform = transforms.Compose([
     transforms.Resize((224,224)),
     transforms.ToTensor(),
-    transforms.Normalize([0.5,0.5,0.5],[0.5,0.5,0.5])
+    transforms.Normalize([0.5]*3,[0.5]*3)
 ])
-
-# Augmentations for TTA
-tta_transforms = [
-    transforms.Compose([
-        transforms.Resize((224,224)),
-        transforms.RandomRotation(10),
-        transforms.ToTensor(),
-        transforms.Normalize([0.5]*3,[0.5]*3)
-    ]),
-    transforms.Compose([
-        transforms.Resize((224,224)),
-        transforms.ColorJitter(brightness=0.2),
-        transforms.ToTensor(),
-        transforms.Normalize([0.5]*3,[0.5]*3)
-    ]),
-    transforms.Compose([
-        transforms.Resize((224,224)),
-        transforms.RandomHorizontalFlip(p=1),
-        transforms.ToTensor(),
-        transforms.Normalize([0.5]*3,[0.5]*3)
-    ]),
-]
 
 # ------------------- IMAGE CENTER FUNCTION -------------------
 def display_centered_image(image):
@@ -132,11 +133,14 @@ def display_centered_image(image):
 uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 
 if uploaded_file:
-
     image = Image.open(uploaded_file).convert("RGB")
 
+    # SHOW IMAGE
     display_centered_image(image)
 
+    image_tensor = transform(image).unsqueeze(0).to(device)
+
+    # LOADING TEXT
     loading_text = st.empty()
 
     loading_text.markdown(
@@ -146,41 +150,27 @@ if uploaded_file:
 
     time.sleep(2)
 
-    all_probs = []
-
     with torch.no_grad():
-
-        # Base prediction
-        tensor = base_transform(image).unsqueeze(0).to(device)
-        outputs = model(pixel_values=tensor).logits
+        outputs = model(pixel_values=image_tensor).logits
         probs = F.softmax(outputs, dim=1)
-        all_probs.append(probs)
 
-        # TTA predictions
-        for aug in tta_transforms:
-            tensor = aug(image).unsqueeze(0).to(device)
-            outputs = model(pixel_values=tensor).logits
-            probs = F.softmax(outputs, dim=1)
-            all_probs.append(probs)
+        fake_prob = probs[0][0].item()
+        real_prob = probs[0][1].item()
 
-    # Average probabilities
-    avg_probs = torch.mean(torch.stack(all_probs), dim=0)
-
-    fake_prob = avg_probs[0][0].item()
-    real_prob = avg_probs[0][1].item()
-
-    if fake_prob > real_prob:
-        prediction = "Fake"
-        confidence = fake_prob
-    else:
-        prediction = "Real"
-        confidence = real_prob
+        if fake_prob > real_prob:
+            prediction = "Fake"
+            confidence = fake_prob
+        else:
+            prediction = "Real"
+            confidence = real_prob
 
     loading_text.empty()
 
+    # Threshold
     if confidence < 0.60:
         prediction = "Uncertain"
 
+    # DISPLAY RESULT
     st.markdown(
         f'<div class="result-card">Prediction: {prediction}</div>',
         unsafe_allow_html=True
@@ -190,3 +180,38 @@ if uploaded_file:
         f'<div class="confidence-card">Confidence: {round(confidence*100,2)}%</div>',
         unsafe_allow_html=True
     )
+
+    # ------------------- EXPLANATION -------------------
+    if prediction == "Fake":
+        explanation = """
+        <div class="explain-box">
+            <div class="explain-title">Why this logo is Fake:</div>
+            • Irregular shape or distortion detected<br>
+            • Color mismatch compared to original logo<br>
+            • Poor alignment or spacing issues<br>
+            • Unnatural edges or pixel artifacts<br>
+            • Low similarity with known real logos
+        </div>
+        """
+    elif prediction == "Real":
+        explanation = """
+        <div class="explain-box">
+            <div class="explain-title">Why this logo is Real:</div>
+            • Matches standard logo structure<br>
+            • Correct color distribution<br>
+            • Proper alignment and spacing<br>
+            • High similarity with trained dataset<br>
+            • No visible distortions detected
+        </div>
+        """
+    else:
+        explanation = """
+        <div class="explain-box">
+            <div class="explain-title">Result Uncertain:</div>
+            • Model confidence is low<br>
+            • Image may not match training data<br>
+            • Try a clearer or standard logo image
+        </div>
+        """
+
+    st.markdown(explanation, unsafe_allow_html=True)
