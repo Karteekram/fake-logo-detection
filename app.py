@@ -110,7 +110,7 @@ def load_model():
 
 model = load_model()
 
-# 🔥 KEEP ORIGINAL TRANSFORM (NO NORMALIZATION)
+# 🔥 KEEP ORIGINAL TRANSFORM
 transform = transforms.Compose([
     transforms.Resize((224,224)),
     transforms.ToTensor()
@@ -148,7 +148,7 @@ if uploaded_file:
 
     time.sleep(3)
 
-    # 🔥 KEEP ORIGINAL PREDICTION LOGIC
+    # 🔥 ORIGINAL MODEL OUTPUT
     with torch.no_grad():
         outputs = model(pixel_values=image_tensor).logits
         probs = F.softmax(outputs, dim=1)
@@ -158,15 +158,20 @@ if uploaded_file:
 
     classes = ["Fake", "Real"]
     prediction = classes[pred.item()]
-    confidence_value = round(confidence.item()*100, 2)
+    confidence_value = confidence.item()
 
+    # 🔥 ADD UNCERTAIN LOGIC
+    if confidence_value < 0.60:
+        prediction = "Uncertain"
+
+    # DISPLAY
     st.markdown(
         f'<div class="result-card">Prediction: {prediction}</div>',
         unsafe_allow_html=True
     )
 
     st.markdown(
-        f'<div class="confidence-card">Confidence: {confidence_value}%</div>',
+        f'<div class="confidence-card">Confidence: {round(confidence_value*100,2)}%</div>',
         unsafe_allow_html=True
     )
 
@@ -187,20 +192,24 @@ if uploaded_file:
             • Absence of brand-specific design precision  
         </div>
         """
-    else:
+    elif prediction == "Real":
         explanation = """
         <div class="explain-box">
             <div class="explain-title">Why this logo is Real:</div>
-            • Accurate font style matching official brand design<br> 
-            • Proper logo proportions and symmetry maintained<br>
-            • High clarity and sharp visual quality<br>
-            • Correct positioning of all design elements<br>  
-            • Well-defined edges and smooth curves<br>
-            • Presence of fine details consistent with original logo<br>
-            • Balanced spacing between letters and symbols<br>
-            • Correct aspect ratio maintained<br>
-            • Natural and consistent texture appearance<br>
-            • High similarity with trained authentic logo patterns   
+            • Matches standard logo structure<br>
+            • Correct color distribution<br>
+            • Proper alignment and spacing<br>
+            • High similarity with trained dataset<br>
+            • No visible distortions detected  
+        </div>
+        """
+    else:
+        explanation = """
+        <div class="explain-box">
+            <div class="explain-title">Result Uncertain:</div>
+            • Model confidence is low<br>
+            • Image may not match training data<br>
+            • Try a clearer or standard logo image  
         </div>
         """
 
