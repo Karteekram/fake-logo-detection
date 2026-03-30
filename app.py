@@ -55,7 +55,7 @@ st.markdown("""
     margin-top:10px;
 }
 
-/* LOADING TEXT */
+/* CENTER LOADING TEXT */
 .loader-text {
     text-align:center;
     font-size:18px;
@@ -70,28 +70,6 @@ st.markdown("""
     100% {opacity:0.2;}
 }
 
-/* EXPLANATION BOX */
-.explain-box {
-    background: #111827;
-    color: white;
-    padding: 15px;
-    border-radius: 15px;
-    margin: auto;
-    margin-top: 10px;
-    font-size: 20px;
-    text-align: left;
-    line-height: 1.6;
-    border-left: 5px solid #38bdf8;
-}
-
-.explain-title {
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 20px;
-    color: #38bdf8;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -103,7 +81,6 @@ st.markdown(
 
 device = torch.device("cpu")
 
-# ------------------- LOAD MODEL -------------------
 @st.cache_resource
 def load_model():
     model = ViTForImageClassification.from_pretrained("fake_logo_model")
@@ -113,11 +90,9 @@ def load_model():
 
 model = load_model()
 
-# ------------------- TRANSFORM -------------------
 transform = transforms.Compose([
     transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.5]*3,[0.5]*3)
+    transforms.ToTensor()
 ])
 
 # ------------------- IMAGE CENTER FUNCTION -------------------
@@ -139,12 +114,12 @@ uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
-    # SHOW IMAGE
+    # CENTER IMAGE
     display_centered_image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
-    # LOADING TEXT
+    # CENTERED LOADING TEXT
     loading_text = st.empty()
 
     loading_text.markdown(
@@ -152,75 +127,23 @@ if uploaded_file:
         unsafe_allow_html=True
     )
 
-    time.sleep(2)
+    time.sleep(3)
 
     with torch.no_grad():
         outputs = model(pixel_values=image_tensor).logits
         probs = F.softmax(outputs, dim=1)
-
-        fake_prob = probs[0][0].item()
-        real_prob = probs[0][1].item()
-
-        if fake_prob > real_prob:
-            prediction = "Fake"
-            confidence = fake_prob
-        else:
-            prediction = "Real"
-            confidence = real_prob
+        confidence, pred = torch.max(probs, dim=1)
 
     loading_text.empty()
 
-    # Threshold
-    if confidence < 0.60:
-        prediction = "Uncertain"
+    classes = ["Fake", "Real"]
 
-    # DISPLAY RESULT
     st.markdown(
-        f'<div class="result-card">Prediction: {prediction}</div>',
+        f'<div class="result-card">Prediction: {classes[pred.item()]}</div>',
         unsafe_allow_html=True
     )
 
     st.markdown(
-        f'<div class="confidence-card">Confidence: {round(confidence*100,2)}%</div>',
+        f'<div class="confidence-card">Confidence: {round(confidence.item()*100,2)}%</div>',
         unsafe_allow_html=True
     )
-
-    # ------------------- EXPLANATION -------------------
-    if prediction == "Fake":
-        explanation = """
-        <div class="explain-box">
-            <div class="explain-title">Why this logo is Fake:</div>
-            • Inconsistent font style compared to original brand<br>
-            • Slight variation in logo proportions<br>
-            • Blurred or low-quality rendering detected<br>  
-            • Incorrect placement of design elements<br>
-            • Lack of sharpness in edges and curves<br>
-            • Missing fine details present in original logo<br>  
-            • Unusual spacing between letters or symbols<br>
-            • Distorted aspect ratio of the logo<br>
-            • Artificial or generated texture patterns<br>  
-            • Absence of brand-specific design precision  
-        </div>
-        """
-    elif prediction == "Real":
-        explanation = """
-        <div class="explain-box">
-            <div class="explain-title">Why this logo is Real:</div>
-            • Matches standard logo structure<br>
-            • Correct color distribution<br>
-            • Proper alignment and spacing<br>
-            • High similarity with trained dataset<br>
-            • No visible distortions detected
-        </div>
-        """
-    else:
-        explanation = """
-        <div class="explain-box">
-            <div class="explain-title">Result Uncertain:</div>
-            • Model confidence is low<br>
-            • Image may not match training data<br>
-            • Try a clearer or standard logo image
-        </div>
-        """
-
-    st.markdown(explanation, unsafe_allow_html=True)
