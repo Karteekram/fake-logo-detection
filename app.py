@@ -76,8 +76,6 @@ st.markdown("""
     color: white;
     padding: 15px;
     border-radius: 15px;
-    width: 100%;
-    max-width: 350px;
     margin: auto;
     margin-top: 10px;
     font-size: 20px;
