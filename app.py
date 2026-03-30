@@ -190,11 +190,16 @@ if uploaded_file:
         explanation = """
         <div class="explain-box">
             <div class="explain-title">Why this logo is Fake:</div>
-            • Irregular shape or distortion detected<br>
-            • Color mismatch compared to original logo<br>
-            • Poor alignment or spacing issues<br>
-            • Unnatural edges or pixel artifacts<br>
-            • Low similarity with known real logos
+            • Inconsistent font style compared to original brand<br>
+            • Slight variation in logo proportions<br>
+            • Blurred or low-quality rendering detected<br>  
+            • Incorrect placement of design elements<br>
+            • Lack of sharpness in edges and curves<br>
+            • Missing fine details present in original logo<br>  
+            • Unusual spacing between letters or symbols<br>
+            • Distorted aspect ratio of the logo<br>
+            • Artificial or generated texture patterns<br>  
+            • Absence of brand-specific design precision  
         </div>
         """
     elif prediction == "Real":
