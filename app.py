@@ -37,8 +37,7 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
-    width:100%;
-    max-width:350px;
+
     margin:auto;
     margin-top:10px;
 }
@@ -51,8 +50,7 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
-    width:100%;
-    max-width:350px;
+
     margin:auto;
     margin-top:10px;
 }
@@ -81,7 +79,7 @@ st.markdown("""
     width: 100%;
     max-width: 350px;
     margin: auto;
-    margin-top: 15px;
+    margin-top: 10px;
     font-size: 20px;
     text-align: center;
     line-height: 1.6;
