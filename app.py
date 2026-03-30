@@ -191,11 +191,16 @@ if uploaded_file:
         explanation = """
         <div class="explain-box">
             <div class="explain-title">Why this logo is Real:</div>
-            • Matches standard logo structure<br>
-            • Correct color distribution<br>
-            • Proper alignment and spacing<br>
-            • High similarity with trained dataset<br>
-            • No visible distortions detected  
+            • Accurate font style matching official brand design<br> 
+            • Proper logo proportions and symmetry maintained<br>
+            • High clarity and sharp visual quality<br>
+            • Correct positioning of all design elements<br>  
+            • Well-defined edges and smooth curves<br>
+            • Presence of fine details consistent with original logo<br>
+            • Balanced spacing between letters and symbols<br>
+            • Correct aspect ratio maintained<br>
+            • Natural and consistent texture appearance<br>
+            • High similarity with trained authentic logo patterns   
         </div>
         """
 
