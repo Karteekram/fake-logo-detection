@@ -79,7 +79,7 @@ st.markdown("""
     margin: auto;
     margin-top: 10px;
     font-size: 20px;
-    text-align: center;
+    text-align: left;
     line-height: 1.6;
     border-left: 5px solid #38bdf8;
 }
@@ -200,7 +200,7 @@ if uploaded_file:
         explanation = """
         <div class="explain-box">
             <div class="explain-title">Why this logo is Real:</div>
-            • Matches standard logo structureddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd<br>
+            • Matches standard logo structure<br>
             • Correct color distribution<br>
             • Proper alignment and spacing<br>
             • High similarity with trained dataset<br>
