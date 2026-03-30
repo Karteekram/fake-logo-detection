@@ -200,7 +200,7 @@ if uploaded_file:
         explanation = """
         <div class="explain-box">
             <div class="explain-title">Why this logo is Real:</div>
-            • Matches standard logo structure<br>
+            • Matches standard logo structureddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd<br>
             • Correct color distribution<br>
             • Proper alignment and spacing<br>
             • High similarity with trained dataset<br>
