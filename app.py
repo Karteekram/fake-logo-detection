@@ -37,6 +37,8 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
+    width:100%;
+    max-width:350px;
     margin:auto;
     margin-top:10px;
 }
@@ -49,6 +51,8 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
+    width:100%;
+    max-width:350px;
     margin:auto;
     margin-top:10px;
 }
@@ -73,18 +77,21 @@ st.markdown("""
     background: #111827;
     color: white;
     padding: 15px;
-    border-radius: 12px;
-    width: 300px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 350px;
     margin: auto;
     margin-top: 15px;
-    font-size: 15px;
+    font-size: 20px;
+    text-align: center;
     line-height: 1.6;
     border-left: 5px solid #38bdf8;
 }
 
 .explain-title {
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    font-size: 20px;
     color: #38bdf8;
 }
 
