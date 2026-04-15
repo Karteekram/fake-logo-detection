@@ -82,6 +82,28 @@ st.markdown("""
     border-left: 5px solid #38bdf8;
 }
 
+/* DESCRIPTION BOX (SAME ALIGNMENT) */
+.desc-box {
+    background: #1f2937;
+    color: white;
+    padding: 15px;
+    border-radius: 15px;
+    margin: auto;
+    margin-top: 10px;
+    font-size: 20px;
+    text-align: left;
+    line-height: 1.6;
+    border-left: 5px solid #22c55e;
+}
+
+.desc-title {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #22c55e;
+}
+
 .explain-title {
     font-weight: bold;
     text-align: center;
@@ -110,7 +132,51 @@ def load_model():
 
 model = load_model()
 
-# ORIGINAL TRANSFORM
+# ------------------- BRAND FUNCTION -------------------
+def get_brand_description(filename, prediction):
+    name = filename.lower()
+
+    if "amazon" in name:
+        if prediction == "Fake":
+            return "This appears to imitate Amazon branding but contains structural or alignment inconsistencies."
+        elif prediction == "Real":
+            return "This matches Amazon's official logo with correct typography and smile arrow."
+        else:
+            return "Unable to confidently verify this Amazon logo due to unclear features."
+
+    elif "nike" in name:
+        if prediction == "Fake":
+            return "This logo resembles Nike but has distortions in the swoosh design or proportions."
+        elif prediction == "Real":
+            return "This correctly represents Nike’s iconic swoosh with proper alignment."
+        else:
+            return "The Nike logo cannot be confidently verified due to low confidence."
+
+    elif "apple" in name:
+        if prediction == "Fake":
+            return "This Apple logo shows deviation from the standard bitten apple design."
+        elif prediction == "Real":
+            return "This matches Apple's official minimalist logo design."
+        else:
+            return "The system cannot confidently verify this Apple logo."
+
+    elif "google" in name:
+        if prediction == "Fake":
+            return "This Google logo may have incorrect colors or font inconsistencies."
+        elif prediction == "Real":
+            return "This correctly matches Google's color and font styling."
+        else:
+            return "The authenticity of this Google logo is uncertain."
+
+    else:
+        if prediction == "Fake":
+            return "This logo contains visual inconsistencies and does not match standard brand patterns."
+        elif prediction == "Real":
+            return "This logo appears consistent with authentic brand design patterns."
+        else:
+            return "The system cannot determine authenticity due to insufficient confidence."
+
+# ------------------- TRANSFORM -------------------
 transform = transforms.Compose([
     transforms.Resize((224,224)),
     transforms.ToTensor()
@@ -148,7 +214,6 @@ if uploaded_file:
 
     time.sleep(3)
 
-    #  ORIGINAL MODEL OUTPUT
     with torch.no_grad():
         outputs = model(pixel_values=image_tensor).logits
         probs = F.softmax(outputs, dim=1)
@@ -160,11 +225,9 @@ if uploaded_file:
     prediction = classes[pred.item()]
     confidence_value = confidence.item()
 
-    #  UNCERTAIN LOGIC
     if confidence_value < 0.60:
         prediction = "Uncertain"
 
-    # DISPLAY
     st.markdown(
         f'<div class="result-card">Prediction: {prediction}</div>',
         unsafe_allow_html=True
@@ -177,45 +240,23 @@ if uploaded_file:
 
     # ------------------- EXPLANATION -------------------
     if prediction == "Fake":
-        explanation = """
-        <div class="explain-box">
-            <div class="explain-title">Why this logo is Fake:</div>
-            • Inconsistent font style compared to original brand<br>
-            • Slight variation in logo proportions<br>
-            • Blurred or low-quality rendering detected<br>  
-            • Incorrect placement of design elements<br>
-            • Lack of sharpness in edges and curves<br>
-            • Missing fine details present in original logo<br>  
-            • Unusual spacing between letters or symbols<br>
-            • Distorted aspect ratio of the logo<br>
-            • Artificial or generated texture patterns<br>  
-            • Absence of brand-specific design precision  
-        </div>
-        """
+        explanation = """<div class="explain-box"><div class="explain-title">Why this logo is Fake:</div>
+        • Distortion or mismatch detected<br>• Poor alignment<br>• Missing details</div>"""
     elif prediction == "Real":
-        explanation = """
-        <div class="explain-box">
-            <div class="explain-title">Why this logo is Real:</div>
-            • Accurate font style matching official brand design<br> 
-            • Proper logo proportions and symmetry maintained<br>
-            • High clarity and sharp visual quality<br>
-            • Correct positioning of all design elements<br>  
-            • Well-defined edges and smooth curves<br>
-            • Presence of fine details consistent with original logo<br>
-            • Balanced spacing between letters and symbols<br>
-            • Correct aspect ratio maintained<br>
-            • Natural and consistent texture appearance<br>
-            • High similarity with trained authentic logo patterns   
-        </div>
-        """
+        explanation = """<div class="explain-box"><div class="explain-title">Why this logo is Real:</div>
+        • Matches official structure<br>• Correct colors and spacing<br>• High clarity</div>"""
     else:
-        explanation = """
-        <div class="explain-box">
-            <div class="explain-title">Result Uncertain:</div>
-            • Model confidence is low<br>
-            • Image may not match training data<br>
-            • Try a clearer or standard logo image  
-        </div>
-        """
+        explanation = """<div class="explain-box"><div class="explain-title">Result Uncertain:</div>
+        • Low confidence<br>• Unclear features</div>"""
 
     st.markdown(explanation, unsafe_allow_html=True)
+
+    # ------------------- BRAND DESCRIPTION -------------------
+    desc = get_brand_description(uploaded_file.name, prediction)
+
+    st.markdown(f"""
+    <div class="desc-box">
+        <div class="desc-title">Logo Description</div>
+        {desc}
+    </div>
+    """, unsafe_allow_html=True)
