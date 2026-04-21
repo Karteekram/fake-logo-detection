@@ -37,6 +37,7 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
+
     margin:auto;
     margin-top:10px;
 }
@@ -49,6 +50,7 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
+
     margin:auto;
     margin-top:10px;
 }
@@ -101,6 +103,7 @@ st.markdown(
 
 device = torch.device("cpu")
 
+# ------------------- LOAD MODEL -------------------
 @st.cache_resource
 def load_model():
     model = ViTForImageClassification.from_pretrained("fake_logo_model")
@@ -110,10 +113,11 @@ def load_model():
 
 model = load_model()
 
-#TRANSFORM (NO NORMALIZATION)
+# ------------------- TRANSFORM -------------------
 transform = transforms.Compose([
     transforms.Resize((224,224)),
-    transforms.ToTensor()
+    transforms.ToTensor(),
+    transforms.Normalize([0.5]*3,[0.5]*3)
 ])
 
 # ------------------- IMAGE CENTER FUNCTION -------------------
@@ -135,10 +139,12 @@ uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
+    # SHOW IMAGE
     display_centered_image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
+    # LOADING TEXT
     loading_text = st.empty()
 
     loading_text.markdown(
@@ -146,27 +152,36 @@ if uploaded_file:
         unsafe_allow_html=True
     )
 
-    time.sleep(3)
+    time.sleep(2)
 
-    # PREDICTION LOGIC
     with torch.no_grad():
         outputs = model(pixel_values=image_tensor).logits
         probs = F.softmax(outputs, dim=1)
-        confidence, pred = torch.max(probs, dim=1)
+
+        fake_prob = probs[0][0].item()
+        real_prob = probs[0][1].item()
+
+        if fake_prob > real_prob:
+            prediction = "Fake"
+            confidence = fake_prob
+        else:
+            prediction = "Real"
+            confidence = real_prob
 
     loading_text.empty()
 
-    classes = ["Fake", "Real"]
-    prediction = classes[pred.item()]
-    confidence_value = round(confidence.item()*100, 2)
+    # Threshold
+    if confidence < 0.60:
+        prediction = "Uncertain"
 
+    # DISPLAY RESULT
     st.markdown(
         f'<div class="result-card">Prediction: {prediction}</div>',
         unsafe_allow_html=True
     )
 
     st.markdown(
-        f'<div class="confidence-card">Confidence: {confidence_value}%</div>',
+        f'<div class="confidence-card">Confidence: {round(confidence*100,2)}%</div>',
         unsafe_allow_html=True
     )
 
@@ -187,20 +202,24 @@ if uploaded_file:
             • Absence of brand-specific design precision  
         </div>
         """
-    else:
+    elif prediction == "Real":
         explanation = """
         <div class="explain-box">
             <div class="explain-title">Why this logo is Real:</div>
-            • Accurate font style matching official brand design<br> 
-            • Proper logo proportions and symmetry maintained<br>
-            • High clarity and sharp visual quality<br>
-            • Correct positioning of all design elements<br>  
-            • Well-defined edges and smooth curves<br>
-            • Presence of fine details consistent with original logo<br>
-            • Balanced spacing between letters and symbols<br>
-            • Correct aspect ratio maintained<br>
-            • Natural and consistent texture appearance<br>
-            • High similarity with trained authentic logo patterns   
+            • Matches standard logo structure<br>
+            • Correct color distribution<br>
+            • Proper alignment and spacing<br>
+            • High similarity with trained dataset<br>
+            • No visible distortions detected
+        </div>
+        """
+    else:
+        explanation = """
+        <div class="explain-box">
+            <div class="explain-title">Result Uncertain:</div>
+            • Model confidence is low<br>
+            • Image may not match training data<br>
+            • Try a clearer or standard logo image
         </div>
         """
 
