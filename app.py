@@ -8,7 +8,6 @@ import time
 import base64
 import io
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(
     page_title="An Enhanced Fake Logo Verification System using Vision Transformer",
@@ -87,10 +86,10 @@ device = torch.device("cpu")
 # ------------------- LOAD MODELS -------------------
 @st.cache_resource
 def load_model():
-    m = ViTForImageClassification.from_pretrained("fake_logo_model")
-    m.to(device)
-    m.eval()
-    return m
+    model = ViTForImageClassification.from_pretrained("fake_logo_model")
+    model.to(device)
+    model.eval()
+    return model
 
 @st.cache_resource
 def load_feature_model():
@@ -102,7 +101,11 @@ def load_feature_model():
 model = load_model()
 feature_model = load_feature_model()
 
-# ------------------- BRAND REFERENCE (demo) -------------------
+# ------------------- COSINE SIMILARITY (NO sklearn) -------------------
+def cosine_sim(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+# ------------------- BRAND REFERENCE -------------------
 brand_reference = {
     "Amazon": np.random.rand(768),
     "Nike": np.random.rand(768),
@@ -113,38 +116,47 @@ brand_reference = {
 # ------------------- FUNCTIONS -------------------
 def extract_features(image_tensor):
     with torch.no_grad():
-        out = feature_model(pixel_values=image_tensor)
-        features = out.last_hidden_state[:, 0, :]
-    return features.cpu().numpy()
+        outputs = feature_model(pixel_values=image_tensor)
+        features = outputs.last_hidden_state[:, 0, :]
+    return features.cpu().numpy()[0]
 
 def detect_brand(features):
-    best_brand, best_score = "Unknown", -1
+    best_brand = "Unknown"
+    best_score = -1
+
     for brand, ref in brand_reference.items():
-        score = cosine_similarity(features, ref.reshape(1, -1))[0][0]
+        score = cosine_sim(features, ref)
         if score > best_score:
             best_score = score
             best_brand = brand
+
     return best_brand, best_score
 
 def get_brand_description(brand, prediction):
     if brand == "Amazon":
-        return {
-            "Fake": "This logo imitates Amazon but lacks alignment or structure accuracy.",
-            "Real": "This matches Amazon’s official logo with correct typography.",
-            "Uncertain": "Amazon logo detected but confidence is low."
-        }.get(prediction)
+        if prediction == "Fake":
+            return "This logo imitates Amazon branding but shows structural inconsistencies."
+        elif prediction == "Real":
+            return "This matches Amazon’s official logo design and structure."
+        else:
+            return "Amazon logo detected but authenticity is uncertain."
+
     elif brand == "Nike":
-        return {
-            "Fake": "This Nike logo shows distortion in swoosh shape.",
-            "Real": "This correctly represents Nike’s iconic swoosh.",
-            "Uncertain": "Nike logo detected but uncertain classification."
-        }.get(prediction)
+        if prediction == "Fake":
+            return "This Nike logo has distortions in swoosh alignment."
+        elif prediction == "Real":
+            return "This correctly represents Nike’s iconic swoosh."
+        else:
+            return "Nike logo detected but classification is uncertain."
+
     elif brand == "Apple":
-        return {
-            "Fake": "Apple logo shape appears altered or inconsistent.",
-            "Real": "This matches Apple’s official minimalist logo.",
-            "Uncertain": "Apple logo detected but confidence is low."
-        }.get(prediction)
+        if prediction == "Fake":
+            return "Apple logo shape appears inconsistent or altered."
+        elif prediction == "Real":
+            return "This matches Apple’s official minimalist logo."
+        else:
+            return "Apple logo detected but confidence is low."
+
     else:
         return "Brand detected but no detailed information available."
 
@@ -154,13 +166,15 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
+# ------------------- IMAGE DISPLAY -------------------
 def display_centered_image(image):
     buf = io.BytesIO()
     image.save(buf, format="PNG")
     img_str = base64.b64encode(buf.getvalue()).decode()
     st.markdown(f"""
         <div style="text-align:center;">
-            <img src="data:image/png;base64,{img_str}" style="width:300px; max-width:90%; border-radius:12px;">
+            <img src="data:image/png;base64,{img_str}" 
+                 style="width:300px; max-width:90%; border-radius:12px;">
         </div>
     """, unsafe_allow_html=True)
 
@@ -178,7 +192,6 @@ if uploaded_file:
 
     time.sleep(2)
 
-    # Prediction
     with torch.no_grad():
         outputs = model(pixel_values=image_tensor).logits
         probs = F.softmax(outputs, dim=1)
@@ -200,11 +213,11 @@ if uploaded_file:
     st.markdown(f"""
     <div class="explain-box">
         <div class="explain-title">Explanation</div>
-        Model analyzed visual structure, alignment, and learned patterns to classify authenticity.
+        The model analyzes structure, alignment, and learned visual patterns to classify the logo.
     </div>
     """, unsafe_allow_html=True)
 
-    # -------- BRAND DETECTION --------
+    # Brand Detection
     features = extract_features(image_tensor)
     brand, similarity = detect_brand(features)
 
