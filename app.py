@@ -1,4 +1,3 @@
-#new updated code with auto ai text-align
 import streamlit as st
 import torch
 from transformers import ViTForImageClassification
@@ -6,7 +5,7 @@ from torchvision import transforms
 from PIL import Image
 import torch.nn.functional as F
 import time
-import base64 
+import base64
 import io
 
 st.set_page_config(
@@ -38,6 +37,7 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
+
     margin:auto;
     margin-top:10px;
 }
@@ -50,11 +50,12 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
+
     margin:auto;
     margin-top:10px;
 }
 
-/* LOADING TEXT */
+/* CENTER LOADING TEXT */
 .loader-text {
     text-align:center;
     font-size:18px;
@@ -67,50 +68,6 @@ st.markdown("""
     0% {opacity:0.2;}
     50% {opacity:1;}
     100% {opacity:0.2;}
-}
-
-/* EXPLANATION BOX */
-.explain-box {
-    background: #111827;
-    color: white;
-    padding: 15px;
-    border-radius: 15px;
-    margin: auto;
-    margin-top: 10px;
-    font-size: 20px;
-    text-align: left;
-    line-height: 1.6;
-    border-left: 5px solid #38bdf8;
-}
-
-/* DESCRIPTION BOX (SAME ALIGNMENT) */
-.desc-box {
-    background: #1f2937;
-    color: white;
-    padding: 15px;
-    border-radius: 15px;
-    margin: auto;
-    margin-top: 10px;
-    font-size: 20px;
-    text-align: left;
-    line-height: 1.6;
-    border-left: 5px solid #22c55e;
-}
-
-.desc-title {
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 20px;
-    color: #22c55e;
-}
-
-.explain-title {
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 20px;
-    color: #38bdf8;
 }
 
 </style>
@@ -133,51 +90,6 @@ def load_model():
 
 model = load_model()
 
-# ------------------- BRAND FUNCTION -------------------
-def get_brand_description(filename, prediction):
-    name = filename.lower()
-
-    if "amazon" in name:
-        if prediction == "Fake":
-            return "This appears to imitate Amazon branding but contains structural or alignment inconsistencies."
-        elif prediction == "Real":
-            return "This matches Amazon's official logo with correct typography and smile arrow."
-        else:
-            return "Unable to confidently verify this Amazon logo due to unclear features."
-
-    elif "nike" in name:
-        if prediction == "Fake":
-            return "This logo resembles Nike but has distortions in the swoosh design or proportions."
-        elif prediction == "Real":
-            return "This correctly represents Nike’s iconic swoosh with proper alignment."
-        else:
-            return "The Nike logo cannot be confidently verified due to low confidence."
-
-    elif "apple" in name:
-        if prediction == "Fake":
-            return "This Apple logo shows deviation from the standard bitten apple design."
-        elif prediction == "Real":
-            return "This matches Apple's official minimalist logo design."
-        else:
-            return "The system cannot confidently verify this Apple logo."
-
-    elif "google" in name:
-        if prediction == "Fake":
-            return "This Google logo may have incorrect colors or font inconsistencies."
-        elif prediction == "Real":
-            return "This correctly matches Google's color and font styling."
-        else:
-            return "The authenticity of this Google logo is uncertain."
-
-    else:
-        if prediction == "Fake":
-            return "This logo contains visual inconsistencies and does not match standard brand patterns."
-        elif prediction == "Real":
-            return "This logo appears consistent with authentic brand design patterns."
-        else:
-            return "The system cannot determine authenticity due to insufficient confidence."
-
-# ------------------- TRANSFORM -------------------
 transform = transforms.Compose([
     transforms.Resize((224,224)),
     transforms.ToTensor()
@@ -202,10 +114,12 @@ uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
+    # CENTER IMAGE
     display_centered_image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
+    # CENTERED LOADING TEXT
     loading_text = st.empty()
 
     loading_text.markdown(
@@ -223,41 +137,13 @@ if uploaded_file:
     loading_text.empty()
 
     classes = ["Fake", "Real"]
-    prediction = classes[pred.item()]
-    confidence_value = confidence.item()
-
-    if confidence_value < 0.60:
-        prediction = "Uncertain"
 
     st.markdown(
-        f'<div class="result-card">Prediction: {prediction}</div>',
+        f'<div class="result-card">Prediction: {classes[pred.item()]}</div>',
         unsafe_allow_html=True
     )
 
     st.markdown(
-        f'<div class="confidence-card">Confidence: {round(confidence_value*100,2)}%</div>',
+        f'<div class="confidence-card">Confidence: {round(confidence.item()*100,2)}%</div>',
         unsafe_allow_html=True
     )
-
-    # ------------------- EXPLANATION -------------------
-    if prediction == "Fake":
-        explanation = """<div class="explain-box"><div class="explain-title">Why this logo is Fake:</div>
-        • Distortion or mismatch detected<br>• Poor alignment<br>• Missing details</div>"""
-    elif prediction == "Real":
-        explanation = """<div class="explain-box"><div class="explain-title">Why this logo is Real:</div>
-        • Matches official structure<br>• Correct colors and spacing<br>• High clarity</div>"""
-    else:
-        explanation = """<div class="explain-box"><div class="explain-title">Result Uncertain:</div>
-        • Low confidence<br>• Unclear features</div>"""
-
-    st.markdown(explanation, unsafe_allow_html=True)
-
-    # ------------------- BRAND DESCRIPTION -------------------
-    desc = get_brand_description(uploaded_file.name, prediction)
-
-    st.markdown(f"""
-    <div class="desc-box">
-        <div class="desc-title">Logo Description</div>
-        {desc}
-    </div>
-    """, unsafe_allow_html=True)
