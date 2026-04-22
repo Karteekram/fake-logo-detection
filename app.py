@@ -257,34 +257,69 @@ def predict_with_model(model, image_tensor):
 def is_likely_logo(image):
     """
     Self-contained logo filter (no extra folder/model needed).
-    Designed to reject many person/natural photos and allow logo-like inputs.
+    Stricter rejection for person/natural photos using multiple signals.
     """
+    rgb_u8 = np.array(image, dtype=np.uint8)
     gray = np.array(image.convert("L"), dtype=np.float32)
-    rgb = np.array(image, dtype=np.float32)
+    rgb = rgb_u8.astype(np.float32)
     h, w = gray.shape
     area = float(h * w)
 
+    # Texture and gradient behavior.
     contrast = float(gray.std())
-    edge_strength = float(np.abs(np.diff(gray, axis=0)).mean() + np.abs(np.diff(gray, axis=1)).mean())
+    gx = np.abs(np.diff(gray, axis=1))
+    gy = np.abs(np.diff(gray, axis=0))
+    edge_strength = float(gx.mean() + gy.mean())
     channel_std = float(rgb.reshape(-1, 3).std(axis=0).mean())
 
-    # Color complexity estimate: photos usually have larger unique color diversity.
-    small = np.array(Image.fromarray(rgb.astype(np.uint8)).resize((64, 64)))
+    # Color complexity: photos usually have very high color diversity.
+    small = np.array(Image.fromarray(rgb_u8).resize((64, 64)))
     unique_colors = np.unique(small.reshape(-1, 3), axis=0).shape[0]
     color_diversity_ratio = unique_colors / max(float(64 * 64), 1.0)
 
-    # Very rough foreground occupancy using near-white / near-black background tendency.
+    # Logos often have more solid white/black regions than portraits.
     near_white = np.logical_and.reduce([rgb[:, :, 0] > 240, rgb[:, :, 1] > 240, rgb[:, :, 2] > 240]).sum()
     near_black = np.logical_and.reduce([rgb[:, :, 0] < 20, rgb[:, :, 1] < 20, rgb[:, :, 2] < 20]).sum()
     bg_ratio = float(near_white + near_black) / max(area, 1.0)
 
-    looks_like_photo = (
-        contrast > 68
-        and channel_std > 58
-        and edge_strength < 24
-        and color_diversity_ratio > 0.50
-        and bg_ratio < 0.25
+    # Approximate skin-tone coverage in YCbCr space (helps reject person photos).
+    ycbcr = np.array(image.convert("YCbCr"), dtype=np.uint8)
+    cb = ycbcr[:, :, 1]
+    cr = ycbcr[:, :, 2]
+    skin_mask = (cb >= 77) & (cb <= 127) & (cr >= 133) & (cr <= 173)
+    skin_ratio = float(skin_mask.mean())
+
+    # Fine texture density: portraits/natural scenes often have richer micro-texture.
+    lap = (
+        np.abs(gray[1:-1, 1:-1] * 4 - gray[:-2, 1:-1] - gray[2:, 1:-1] - gray[1:-1, :-2] - gray[1:-1, 2:])
+        if h > 2 and w > 2
+        else np.zeros((1, 1), dtype=np.float32)
     )
+    high_texture_ratio = float((lap > 22).mean())
+
+    photo_score = 0
+    photo_score += 1 if contrast > 62 else 0
+    photo_score += 1 if channel_std > 56 else 0
+    photo_score += 1 if edge_strength < 24 else 0
+    photo_score += 1 if color_diversity_ratio > 0.55 else 0
+    photo_score += 1 if bg_ratio < 0.16 else 0
+    photo_score += 1 if skin_ratio > 0.15 else 0
+    photo_score += 1 if high_texture_ratio > 0.42 else 0
+
+    # Strong logo cues: many logos have solid background and sharper boundaries.
+    logo_cue_score = 0
+    logo_cue_score += 1 if bg_ratio > 0.26 else 0
+    logo_cue_score += 1 if edge_strength > 30 else 0
+    logo_cue_score += 1 if color_diversity_ratio < 0.42 else 0
+    logo_cue_score += 1 if skin_ratio < 0.08 else 0
+
+    looks_like_photo = (
+        (photo_score >= 5 and (skin_ratio > 0.10 or color_diversity_ratio > 0.62))
+        or (skin_ratio > 0.18 and color_diversity_ratio > 0.50 and bg_ratio < 0.20)
+    )
+    if logo_cue_score >= 3 and photo_score < 6:
+        looks_like_photo = False
+
     return not looks_like_photo
 
 # ------------------- FILE UPLOAD -------------------
@@ -311,11 +346,6 @@ if uploaded_file:
     )
 
     time.sleep(2)
-
-    if not is_likely_logo(image):
-        loading_text.empty()
-        st.error("Please upload a brand logo image only (no person/natural photos).")
-        st.stop()
 
     _, _, auth_probs = predict_with_model(model, image_tensor)
     fake_prob = float(auth_probs[0][0].item()) if auth_probs.shape[1] > 0 else 0.0
