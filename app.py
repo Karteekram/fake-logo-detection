@@ -9,6 +9,7 @@ import base64
 import io
 import numpy as np
 import hashlib
+import os
 
 st.set_page_config(
     page_title="An Enhanced Fake Logo Verification System using Vision Transformer",
@@ -105,15 +106,28 @@ st.markdown(
 
 device = torch.device("cpu")
 
-# ------------------- LOAD MODEL -------------------
+# ------------------- LOAD MODELS -------------------
 @st.cache_resource
-def load_model():
+def load_auth_model():
     model = ViTForImageClassification.from_pretrained("fake_logo_model")
     model.to(device)
     model.eval()
     return model
 
-model = load_model()
+@st.cache_resource
+def load_brand_model():
+    brand_model_path = "brand_logo_model"
+    if not os.path.isdir(brand_model_path):
+        return None
+
+    model = ViTForImageClassification.from_pretrained(brand_model_path)
+    model.to(device)
+    model.eval()
+    return model
+
+
+auth_model = load_auth_model()
+brand_model = load_brand_model()
 
 # ------------------- TRANSFORM -------------------
 transform = transforms.Compose([
@@ -239,6 +253,20 @@ def build_unique_image_description(image, prediction, confidence):
     st.session_state.image_description_cache[image_hash] = description
     return description
 
+
+def predict_with_model(model, image_tensor):
+    """Run a classifier and return top label, confidence, and full probabilities."""
+    with torch.no_grad():
+        outputs = model(pixel_values=image_tensor).logits
+        probs = F.softmax(outputs, dim=1)
+
+    top_idx = int(torch.argmax(probs, dim=1).item())
+    top_conf = float(probs[0][top_idx].item())
+
+    id_to_label = getattr(model.config, "id2label", {})
+    label = id_to_label.get(top_idx, str(top_idx)) if isinstance(id_to_label, dict) else str(top_idx)
+    return label, top_conf, probs
+
 # ------------------- FILE UPLOAD -------------------
 uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 
@@ -260,19 +288,16 @@ if uploaded_file:
 
     time.sleep(2)
 
-    with torch.no_grad():
-        outputs = model(pixel_values=image_tensor).logits
-        probs = F.softmax(outputs, dim=1)
+    auth_label, auth_confidence, auth_probs = predict_with_model(auth_model, image_tensor)
+    fake_prob = float(auth_probs[0][0].item()) if auth_probs.shape[1] > 0 else 0.0
+    real_prob = float(auth_probs[0][1].item()) if auth_probs.shape[1] > 1 else 0.0
 
-        fake_prob = probs[0][0].item()
-        real_prob = probs[0][1].item()
-
-        if fake_prob > real_prob:
-            prediction = "Fake"
-            confidence = fake_prob
-        else:
-            prediction = "Real"
-            confidence = real_prob
+    if fake_prob > real_prob:
+        prediction = "Fake"
+        confidence = fake_prob
+    else:
+        prediction = "Real"
+        confidence = real_prob
 
     loading_text.empty()
 
@@ -290,6 +315,22 @@ if uploaded_file:
         f'<div class="confidence-card">Confidence: {round(confidence*100,2)}%</div>',
         unsafe_allow_html=True
     )
+
+    # ------------------- BRAND PREDICTION -------------------
+    if brand_model is not None:
+        brand_label, brand_confidence, _ = predict_with_model(brand_model, image_tensor)
+        st.markdown(
+            f'<div class="result-card">Brand Prediction: {brand_label}</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f'<div class="confidence-card">Brand Confidence: {round(brand_confidence*100,2)}%</div>',
+            unsafe_allow_html=True
+        )
+    else:
+        st.warning(
+            "Brand model not found. Add a trained folder named 'brand_logo_model' to enable brand prediction."
+        )
 
     # ------------------- EXPLANATION -------------------
     explanation = build_image_specific_explanation(image, prediction, confidence)
