@@ -39,7 +39,6 @@ st.markdown("""
     border-radius:15px;
     font-size:20px;
     text-align:center;
-
     margin:auto;
     margin-top:10px;
 }
@@ -52,7 +51,6 @@ st.markdown("""
     border-radius:15px;
     text-align:center;
     font-size:20px;
-
     margin:auto;
     margin-top:10px;
 }
@@ -116,10 +114,10 @@ def load_model():
 model = load_model()
 
 # ------------------- TRANSFORM -------------------
+# Keep this same as Colab training
 transform = transforms.Compose([
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.5]*3,[0.5]*3)
+    transforms.Resize((224, 224)),
+    transforms.ToTensor()
 ])
 
 # ------------------- IMAGE CENTER FUNCTION -------------------
@@ -127,7 +125,7 @@ def display_centered_image(image):
     buf = io.BytesIO()
     image.save(buf, format="PNG")
     img_str = base64.b64encode(buf.getvalue()).decode()
-    
+
     st.markdown(f"""
         <div style="text-align:center;">
             <img src="data:image/png;base64,{img_str}" 
@@ -137,11 +135,9 @@ def display_centered_image(image):
 
 
 def build_image_specific_explanation(image, prediction, confidence):
-    """Create a per-image explanation using simple visual metrics."""
     image_array = np.array(image)
     gray = np.array(image.convert("L"))
 
-    # Image-specific metrics so each upload gets a distinct description.
     brightness = float(gray.mean())
     contrast = float(gray.std())
     edge_strength = float(np.abs(np.diff(gray.astype(np.float32), axis=0)).mean())
@@ -194,10 +190,6 @@ def build_image_specific_explanation(image, prediction, confidence):
 
 
 def build_unique_image_description(image, prediction, confidence):
-    """
-    Generate a unique, automatic description per image.
-    Different images should not share exactly the same description text.
-    """
     if "image_description_cache" not in st.session_state:
         st.session_state.image_description_cache = {}
     if "used_descriptions" not in st.session_state:
@@ -206,7 +198,6 @@ def build_unique_image_description(image, prediction, confidence):
     image_bytes = image.tobytes()
     image_hash = hashlib.sha256(image_bytes).hexdigest()
 
-    # If this exact image was already described, reuse the same description.
     if image_hash in st.session_state.image_description_cache:
         return st.session_state.image_description_cache[image_hash]
 
@@ -231,7 +222,6 @@ def build_unique_image_description(image, prediction, confidence):
         f"color channel is {dominant_color}."
     )
 
-    # Absolute safety check: avoid exact text duplication across different images.
     if description in st.session_state.used_descriptions:
         description = f"{description} Variant-{image_hash[8:12]}"
 
@@ -241,7 +231,6 @@ def build_unique_image_description(image, prediction, confidence):
 
 
 def predict_with_model(model, image_tensor):
-    """Run a classifier and return top label, confidence, and full probabilities."""
     with torch.no_grad():
         outputs = model(pixel_values=image_tensor).logits
         probs = F.softmax(outputs, dim=1)
@@ -255,41 +244,32 @@ def predict_with_model(model, image_tensor):
 
 
 def is_likely_logo(image):
-    """
-    Self-contained logo filter (no extra folder/model needed).
-    Stricter rejection for person/natural photos using multiple signals.
-    """
     rgb_u8 = np.array(image, dtype=np.uint8)
     gray = np.array(image.convert("L"), dtype=np.float32)
     rgb = rgb_u8.astype(np.float32)
     h, w = gray.shape
     area = float(h * w)
 
-    # Texture and gradient behavior.
     contrast = float(gray.std())
     gx = np.abs(np.diff(gray, axis=1))
     gy = np.abs(np.diff(gray, axis=0))
     edge_strength = float(gx.mean() + gy.mean())
     channel_std = float(rgb.reshape(-1, 3).std(axis=0).mean())
 
-    # Color complexity: photos usually have very high color diversity.
     small = np.array(Image.fromarray(rgb_u8).resize((64, 64)))
     unique_colors = np.unique(small.reshape(-1, 3), axis=0).shape[0]
     color_diversity_ratio = unique_colors / max(float(64 * 64), 1.0)
 
-    # Logos often have more solid white/black regions than portraits.
     near_white = np.logical_and.reduce([rgb[:, :, 0] > 240, rgb[:, :, 1] > 240, rgb[:, :, 2] > 240]).sum()
     near_black = np.logical_and.reduce([rgb[:, :, 0] < 20, rgb[:, :, 1] < 20, rgb[:, :, 2] < 20]).sum()
     bg_ratio = float(near_white + near_black) / max(area, 1.0)
 
-    # Approximate skin-tone coverage in YCbCr space (helps reject person photos).
     ycbcr = np.array(image.convert("YCbCr"), dtype=np.uint8)
     cb = ycbcr[:, :, 1]
     cr = ycbcr[:, :, 2]
     skin_mask = (cb >= 77) & (cb <= 127) & (cr >= 133) & (cr <= 173)
     skin_ratio = float(skin_mask.mean())
 
-    # Fine texture density: portraits/natural scenes often have richer micro-texture.
     lap = (
         np.abs(gray[1:-1, 1:-1] * 4 - gray[:-2, 1:-1] - gray[2:, 1:-1] - gray[1:-1, :-2] - gray[1:-1, 2:])
         if h > 2 and w > 2
@@ -306,7 +286,6 @@ def is_likely_logo(image):
     photo_score += 1 if skin_ratio > 0.15 else 0
     photo_score += 1 if high_texture_ratio > 0.42 else 0
 
-    # Strong logo cues: many logos have solid background and sharper boundaries.
     logo_cue_score = 0
     logo_cue_score += 1 if bg_ratio > 0.26 else 0
     logo_cue_score += 1 if edge_strength > 30 else 0
@@ -322,24 +301,37 @@ def is_likely_logo(image):
 
     return not looks_like_photo
 
+
 # ------------------- FILE UPLOAD -------------------
-uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
+uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
 
-    # SHOW IMAGE
     display_centered_image(image)
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
+    # Non-logo/person image => mark as Uncertain
     if not is_likely_logo(image):
-        st.error("Please upload a brand logo image only (no person/natural photos).")
+        prediction = "Uncertain"
+        confidence = 0.0
+
+        st.markdown(
+            f'<div class="result-card">Prediction: {prediction}</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f'<div class="confidence-card">Confidence: {round(confidence*100, 2)}%</div>',
+            unsafe_allow_html=True
+        )
+        st.warning("Uploaded image appears to be non-logo/person image. Please upload a brand logo.")
+
+        unique_description = build_unique_image_description(image, prediction, confidence)
+        st.info(unique_description)
         st.stop()
 
-    # LOADING TEXT
     loading_text = st.empty()
-
     loading_text.markdown(
         '<div class="loader-text">Analyzing Logo...</div>',
         unsafe_allow_html=True
@@ -360,26 +352,21 @@ if uploaded_file:
 
     loading_text.empty()
 
-    # Threshold
     if confidence < 0.60:
         prediction = "Uncertain"
 
-    # DISPLAY RESULT
     st.markdown(
         f'<div class="result-card">Prediction: {prediction}</div>',
         unsafe_allow_html=True
     )
 
     st.markdown(
-        f'<div class="confidence-card">Confidence: {round(confidence*100,2)}%</div>',
+        f'<div class="confidence-card">Confidence: {round(confidence*100, 2)}%</div>',
         unsafe_allow_html=True
     )
 
-    # ------------------- EXPLANATION -------------------
     explanation = build_image_specific_explanation(image, prediction, confidence)
-
     st.markdown(explanation, unsafe_allow_html=True)
 
-    # ------------------- UNIQUE AUTO DESCRIPTION -------------------
     unique_description = build_unique_image_description(image, prediction, confidence)
     st.info(unique_description)
