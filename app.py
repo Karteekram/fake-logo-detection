@@ -1,5 +1,3 @@
-#first cursor
-
 import streamlit as st
 import torch
 from transformers import ViTForImageClassification
@@ -241,6 +239,54 @@ def build_unique_image_description(image, prediction, confidence):
     st.session_state.image_description_cache[image_hash] = description
     return description
 
+
+def predict_with_model(model, image_tensor):
+    """Run a classifier and return top label, confidence, and full probabilities."""
+    with torch.no_grad():
+        outputs = model(pixel_values=image_tensor).logits
+        probs = F.softmax(outputs, dim=1)
+
+    top_idx = int(torch.argmax(probs, dim=1).item())
+    top_conf = float(probs[0][top_idx].item())
+
+    id_to_label = getattr(model.config, "id2label", {})
+    label = id_to_label.get(top_idx, str(top_idx)) if isinstance(id_to_label, dict) else str(top_idx)
+    return label, top_conf, probs
+
+
+def is_likely_logo(image):
+    """
+    Self-contained logo filter (no extra folder/model needed).
+    Designed to reject many person/natural photos and allow logo-like inputs.
+    """
+    gray = np.array(image.convert("L"), dtype=np.float32)
+    rgb = np.array(image, dtype=np.float32)
+    h, w = gray.shape
+    area = float(h * w)
+
+    contrast = float(gray.std())
+    edge_strength = float(np.abs(np.diff(gray, axis=0)).mean() + np.abs(np.diff(gray, axis=1)).mean())
+    channel_std = float(rgb.reshape(-1, 3).std(axis=0).mean())
+
+    # Color complexity estimate: photos usually have larger unique color diversity.
+    small = np.array(Image.fromarray(rgb.astype(np.uint8)).resize((64, 64)))
+    unique_colors = np.unique(small.reshape(-1, 3), axis=0).shape[0]
+    color_diversity_ratio = unique_colors / max(float(64 * 64), 1.0)
+
+    # Very rough foreground occupancy using near-white / near-black background tendency.
+    near_white = np.logical_and.reduce([rgb[:, :, 0] > 240, rgb[:, :, 1] > 240, rgb[:, :, 2] > 240]).sum()
+    near_black = np.logical_and.reduce([rgb[:, :, 0] < 20, rgb[:, :, 1] < 20, rgb[:, :, 2] < 20]).sum()
+    bg_ratio = float(near_white + near_black) / max(area, 1.0)
+
+    looks_like_photo = (
+        contrast > 68
+        and channel_std > 58
+        and edge_strength < 24
+        and color_diversity_ratio > 0.50
+        and bg_ratio < 0.25
+    )
+    return not looks_like_photo
+
 # ------------------- FILE UPLOAD -------------------
 uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
 
@@ -252,6 +298,10 @@ if uploaded_file:
 
     image_tensor = transform(image).unsqueeze(0).to(device)
 
+    if not is_likely_logo(image):
+        st.error("Please upload a brand logo image only (no person/natural photos).")
+        st.stop()
+
     # LOADING TEXT
     loading_text = st.empty()
 
@@ -262,19 +312,21 @@ if uploaded_file:
 
     time.sleep(2)
 
-    with torch.no_grad():
-        outputs = model(pixel_values=image_tensor).logits
-        probs = F.softmax(outputs, dim=1)
+    if not is_likely_logo(image):
+        loading_text.empty()
+        st.error("Please upload a brand logo image only (no person/natural photos).")
+        st.stop()
 
-        fake_prob = probs[0][0].item()
-        real_prob = probs[0][1].item()
+    _, _, auth_probs = predict_with_model(model, image_tensor)
+    fake_prob = float(auth_probs[0][0].item()) if auth_probs.shape[1] > 0 else 0.0
+    real_prob = float(auth_probs[0][1].item()) if auth_probs.shape[1] > 1 else 0.0
 
-        if fake_prob > real_prob:
-            prediction = "Fake"
-            confidence = fake_prob
-        else:
-            prediction = "Real"
-            confidence = real_prob
+    if fake_prob > real_prob:
+        prediction = "Fake"
+        confidence = fake_prob
+    else:
+        prediction = "Real"
+        confidence = real_prob
 
     loading_text.empty()
 
