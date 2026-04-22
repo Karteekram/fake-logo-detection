@@ -323,7 +323,12 @@ def is_likely_logo(image):
     return not looks_like_photo
 
 # ------------------- FILE UPLOAD -------------------
-uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
+left_col, middle_col, right_col = st.columns([1, 2, 1])
+with middle_col:
+    uploaded_file = st.file_uploader(
+        "Upload Logo Image",
+        type=["jpg", "png", "jpeg"]
+    )
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
