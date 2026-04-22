@@ -94,6 +94,33 @@ st.markdown("""
     color: #38bdf8;
 }
 
+.upload-card {
+    background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin: 8px 0 14px 0;
+}
+
+.upload-title {
+    color: #e2e8f0;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.upload-subtitle {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.upload-note {
+    color: #38bdf8;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -323,7 +350,22 @@ def is_likely_logo(image):
     return not looks_like_photo
 
 # ------------------- FILE UPLOAD -------------------
-uploaded_file = st.file_uploader("Upload Logo Image", type=["jpg","png","jpeg"])
+st.markdown(
+    """
+    <div class="upload-card">
+        <div class="upload-title">Upload Brand Logo</div>
+        <div class="upload-subtitle">Choose a clear brand logo image to analyze.</div>
+        <div class="upload-subtitle">Supported formats: JPG, JPEG, PNG</div>
+        <div class="upload-note">Tip: Centered logo images give better results.</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+uploaded_file = st.file_uploader(
+    "Upload Logo Image",
+    type=["jpg", "png", "jpeg"],
+    label_visibility="collapsed"
+)
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
